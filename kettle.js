@@ -5,14 +5,15 @@ const showBrowser = !!process.argv[2];
 const options = showBrowser
   ? {
       headless: false,
-      slowMo: 1,
-      executablePath:
-        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      slowMo: 20,
+      // executablePath:
+      // '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     }
   : {};
 
 const LOGIN_URL = 'https://www.kettlebellkings.com/login.php';
 const STOCK_URL = 'https://www.kettlebellkings.com/competition-kettlebell/';
+const IFRAME_OVERLAY = '#attentive_overlay';
 const SELECT_SELECTOR = '#attribute_select_888';
 const OPTIONS_SELECTOR = '#attribute_select_888 > option';
 
@@ -21,6 +22,7 @@ const asyncForEach = async (array, callback) => {
     await callback(array[index], index, array);
   }
 };
+
 const getTextContent = (el) => el.textContent;
 
 const getTextFromHandles = async (page, handles) => {
@@ -41,13 +43,13 @@ async function init() {
     let response;
     const page = await browser.newPage();
 
-    await page.goto(LOGIN_URL);
+    await page.goto(LOGIN_URL, { waitUntil: 'networkidle2' });
     response = await login(page);
     if (response.error) {
       throw new Error(response.error);
     }
 
-    await page.goto(STOCK_URL);
+    await page.goto(STOCK_URL, { waitUntil: 'networkidle2' });
     response = await checkStock(page);
     if (response.error) {
       throw new Error(response.error);
@@ -61,6 +63,12 @@ async function init() {
 
 async function login(page) {
   try {
+    await page.waitForSelector(IFRAME_OVERLAY);
+    await page.$eval(IFRAME_OVERLAY, (overlay) => {
+      overlay.remove();
+    });
+
+    await page.waitForSelector('#login_email');
     await page.click('#login_email');
     await page.keyboard.type(user);
 
@@ -68,7 +76,7 @@ async function login(page) {
     await page.keyboard.type(password);
 
     const navigate = page.waitForNavigation({
-      waitUntil: 'networkidle0',
+      waitUntil: 'networkidle2',
     });
     page.click(
       'body > div.body > div.container > div > div > form > div.form-actions > input'
@@ -91,7 +99,13 @@ async function checkStock(page) {
     const sixteen = inStock[4];
 
     if (twelve || sixteen) {
-      await inform({ twelve, sixteen });
+      await inform();
+    }
+    if (twelve) {
+      await addTwelveToCart(page);
+    }
+    if (sixteen) {
+      await addSixteenToCart(page);
     }
 
     debugger;
@@ -101,8 +115,10 @@ async function checkStock(page) {
   }
 }
 
-async function inform({ twelve, sixteen }) {
-  console.log({ twelve, sixteen });
+async function inform() {
+  console.log('text?');
 }
+async function addTwelveToCart(page) {}
+async function addSixteenToCart(page) {}
 
 init();

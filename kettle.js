@@ -1,21 +1,30 @@
+const request = require('request-json');
+const url = require('url');
 const puppeteer = require('puppeteer');
-const { user, password } = require('./secrets.json');
-
-const showBrowser = !!process.argv[2];
-const options = showBrowser
-  ? {
-      headless: false,
-      slowMo: 20,
-      // executablePath:
-      // '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    }
-  : {};
+const { user, password, tillUrl, phoneNumber } = require('./secrets.json');
 
 const LOGIN_URL = 'https://www.kettlebellkings.com/login.php';
 const STOCK_URL = 'https://www.kettlebellkings.com/competition-kettlebell/';
 const IFRAME_OVERLAY = '#attentive_overlay';
 const SELECT_SELECTOR = '#attribute_select_888';
 const OPTIONS_SELECTOR = '#attribute_select_888 > option';
+
+const showBrowser = !!process.argv[2];
+const options = showBrowser
+  ? {
+      headless: false,
+      slowMo: 20,
+    }
+  : {};
+
+const TILL_URL = tillUrl ? url.parse(tillUrl) : url.parse(process.env.TILL_URL);
+const TILL_BASE = TILL_URL.protocol + '//' + TILL_URL.host;
+let TILL_PATH = TILL_URL.pathname;
+const TILL_PHONE = phoneNumber || process.env.TILL_PHONE;
+
+if (TILL_URL.query != null) {
+  TILL_PATH += '?' + TILL_URL.query;
+}
 
 const asyncForEach = async (array, callback) => {
   for (let index = 0; index < array.length; index++) {
@@ -90,6 +99,8 @@ async function login(page) {
 
 async function checkStock(page) {
   try {
+    let response;
+
     await page.waitForSelector(SELECT_SELECTOR);
     const options = await page.$$(OPTIONS_SELECTOR);
     const optionsText = await getTextFromHandles(page, options);
@@ -102,23 +113,40 @@ async function checkStock(page) {
       await inform();
     }
     if (twelve) {
-      await addTwelveToCart(page);
-    }
-    if (sixteen) {
-      await addSixteenToCart(page);
+      response = await addToCart(page, '2199');
+    } else if (sixteen) {
+      response = await addToCart(page, '2201');
     }
 
-    debugger;
-    return {};
+    return response;
   } catch (error) {
     return { error };
   }
 }
 
 async function inform() {
-  console.log('text?');
+  return request.createClient(TILL_BASE).post(
+    TILL_PATH,
+    {
+      phone: [TILL_PHONE],
+      text:
+        'Kettle Bell in STOCK!\nhttps://www.kettlebellkings.com/competition-kettlebell/',
+    },
+    function (err, res) {
+      return console.log(res.statusCode);
+    }
+  );
 }
-async function addTwelveToCart(page) {}
-async function addSixteenToCart(page) {}
+async function addToCart(page, value) {
+  try {
+    await page.select(SELECT_SELECTOR, value);
+    await page.click('#form-action-addToCart');
+
+    return {};
+  } catch (e) {
+    console.error('trouble with select');
+    return { error: 'trouble with select' };
+  }
+}
 
 init();

@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/btthomas/kettlebell#readme",
   "dependencies": {
-    "puppeteer": "^5.2.1"
+    "puppeteer": "^5.2.1",
+    "request-json": "^0.6.5"
   }
 }

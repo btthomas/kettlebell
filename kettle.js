@@ -1,7 +1,9 @@
 const request = require('request-json');
 const url = require('url');
 const puppeteer = require('puppeteer');
-const { user, password, tillUrl, phoneNumber } = require('./secrets.json');
+
+const user = process.env.KETTLE_USERNAME;
+const password = process.env.KETTLE_PASSWORD;
 
 const LOGIN_URL = 'https://www.kettlebellkings.com/login.php';
 const STOCK_URL = 'https://www.kettlebellkings.com/competition-kettlebell/';
@@ -17,10 +19,10 @@ const options = showBrowser
     }
   : {};
 
-const TILL_URL = tillUrl ? url.parse(tillUrl) : url.parse(process.env.TILL_URL);
+const TILL_URL = url.parse(process.env.TILL_URL);
 const TILL_BASE = TILL_URL.protocol + '//' + TILL_URL.host;
 let TILL_PATH = TILL_URL.pathname;
-const TILL_PHONE = phoneNumber || process.env.TILL_PHONE;
+const TILL_PHONE = process.env.TILL_PHONE;
 
 if (TILL_URL.query != null) {
   TILL_PATH += '?' + TILL_URL.query;

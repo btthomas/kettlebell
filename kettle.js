@@ -17,7 +17,9 @@ const options = showBrowser
       headless: false,
       slowMo: 20,
     }
-  : {};
+  : {
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    };
 
 const TILL_URL = url.parse(process.env.TILL_URL);
 const TILL_BASE = TILL_URL.protocol + '//' + TILL_URL.host;
@@ -101,7 +103,7 @@ async function login(page) {
 
 async function checkStock(page) {
   try {
-    let response;
+    let response = {};
 
     await page.waitForSelector(SELECT_SELECTOR);
     const options = await page.$$(OPTIONS_SELECTOR);

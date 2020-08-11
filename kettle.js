@@ -55,12 +55,14 @@ async function init() {
   try {
     let response;
     const page = await browser.newPage();
+    console.log('starting');
 
     await page.goto(LOGIN_URL, { waitUntil: 'networkidle2' });
     response = await login(page);
     if (response.error) {
       throw new Error(response.error);
     }
+    console.log('logged in');
 
     await page.goto(STOCK_URL, { waitUntil: 'networkidle2' });
     response = await checkStock(page);
@@ -69,6 +71,7 @@ async function init() {
     }
 
     await browser.close();
+    console.log('complete');
   } catch (e) {
     console.error(e);
   }
@@ -129,6 +132,7 @@ async function checkStock(page) {
 }
 
 async function inform() {
+  console.log('informing');
   return request.createClient(TILL_BASE).post(
     TILL_PATH,
     {
@@ -143,6 +147,7 @@ async function inform() {
 }
 async function addToCart(page, value) {
   try {
+    console.log('adding to cart');
     await page.select(SELECT_SELECTOR, value);
     await page.click('#form-action-addToCart');
 

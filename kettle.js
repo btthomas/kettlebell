@@ -149,6 +149,7 @@ async function addToCart(page, value) {
   try {
     console.log('adding to cart');
     await page.select(SELECT_SELECTOR, value);
+    await page.waitFor(4000);
     await page.click('#form-action-addToCart');
 
     return {};
